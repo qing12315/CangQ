@@ -1,7 +1,9 @@
 package com.sky.controller.admin;
 
 import com.sky.constant.JwtClaimsConstant;
+import com.sky.context.BaseContext;
 import com.sky.dto.EmployeeDTO;
+import com.sky.dto.EmployeeEditPasswordDTO;
 import com.sky.dto.EmployeeLoginDTO;
 import com.sky.dto.EmployeePageQueryDTO;
 import com.sky.entity.Employee;
@@ -42,10 +44,13 @@ public class EmployeeController {
      * @param id
      * @return
      */
+
 //    @GetMapping("/{id}")
 //    public Object getEmployee(@PathVariable Long id) {
 //        return null;
 //    }
+
+
     /**
      * 登录
      *
@@ -58,6 +63,9 @@ public class EmployeeController {
         log.info("员工登录：{}", employeeLoginDTO);
 
         Employee employee = employeeService.login(employeeLoginDTO);
+
+        //  登录成功后将用户ID存入BaseContext
+        BaseContext.setCurrentId(employee.getId());
 
         //登录成功后，生成jwt令牌
         Map<String, Object> claims = new HashMap<>();
@@ -88,11 +96,25 @@ public class EmployeeController {
         return Result.success();
     }
 
+    /**
+     * 新增员工
+     * @param employeeDTO
+     * @return
+     */
     @PostMapping
     @ApiOperation("新增员工")
     public  Result save(@RequestBody EmployeeDTO employeeDTO){
         log.info("新增员工：{}",employeeDTO);
 //        System.out.println("当前线程的id："+ Thread.currentThread().getId());
+
+//        //  获取当前用户ID
+//        Long currentId = BaseContext.getCurrentId();
+//        if(currentId==null){
+//            log.info("当前用户ID为：{}",currentId);
+//        } else
+//        {
+//            log.warn("当前用户ID为：{}",currentId);
+//        }
         employeeService.save(employeeDTO);
         return Result.success();
     }
@@ -150,5 +172,31 @@ public class EmployeeController {
         //修改数据
         employeeService.update(employeeDTO);
         return Result.success();
+    }
+
+
+    /**
+     * 修改密码
+     * @param employeeEditPasswordDTO
+     * @return
+     */
+    @PutMapping("/editPassword")
+    @ApiOperation("修改密码")
+    public Result editPassword(@RequestBody EmployeeEditPasswordDTO employeeEditPasswordDTO){
+
+        //  从BaseContext中获取当前用户ID
+        Long empId = BaseContext.getCurrentId();
+        if(empId==null){
+            log.error("未获取当前用户 ID");
+            return Result.error("未获取当前用户 ID");
+        }
+
+        //  设置员工ID
+        employeeService.editPassword(employeeEditPasswordDTO);
+
+        log.info("修改员工密码;{}",employeeEditPasswordDTO);
+        //  修改密码
+        employeeService.editPassword(employeeEditPasswordDTO);
+        return Result.success("密码修改成功");
     }
 }
